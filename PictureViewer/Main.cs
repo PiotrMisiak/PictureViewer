@@ -17,48 +17,26 @@ namespace PictureViewer
         private string _filePath = Path.Combine(Environment.CurrentDirectory, "filepath.txt");
         public Main()
         {
+           
             InitializeComponent();
-                      
-            var files = DeserializeFromFile();
-            
-            foreach (var item in files)
-               {
-                    var filePath = item.FilePath;
-                   if (!string.IsNullOrWhiteSpace(filePath))
-                    {
-                        pbImage.Image = Image.FromFile(filePath);
-                        btnRemovePicture.Visible = true;
-                    }  
-                    else
-                        btnRemovePicture.Visible = false;
-                }                                                          
+           
+            if (!File.Exists(_filePath))
+            {
+                pbImage.Image = null;
+                btnRemovePicture.Visible = false;
+            }
+            else
+            {
+                var filePath = File.ReadAllText(_filePath);
+
+                if (!string.IsNullOrWhiteSpace(filePath))
+                {
+                    pbImage.Image = Image.FromFile(filePath);
+                    btnRemovePicture.Visible = true;
+                }
+            }
         }
                
-        public void SerializeToFile(List<Files> files)
-      {
-            var serializer = new XmlSerializer(typeof(List<Files>));
-           
-           using (var streamwriter = new StreamWriter(_filePath))
-            {
-                serializer.Serialize(streamwriter, files);
-                streamwriter.Close();
-            }
-        }
-
-        public List<Files> DeserializeFromFile()
-        {
-            if (!File.Exists(_filePath))           
-                return new List<Files>();            
-
-            var serializer = new XmlSerializer(typeof(List<Files>));
-
-            using (var streamReader = new StreamReader(_filePath))
-            {
-                var files = (List<Files>)serializer.Deserialize(streamReader);
-                streamReader.Close();
-                return files;
-            }
-        }
         private void btnAddPicture_MouseClick(object sender, MouseEventArgs e)
         {                 
             AddPicture();
@@ -74,12 +52,7 @@ namespace PictureViewer
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 pbImage.Load(openFileDialog1.FileName);
-
-                var filePath = openFileDialog1.FileName;
-                var files = new List<Files>();
-                files.Add(new Files { FilePath = filePath});
-                SerializeToFile(files);
-
+                File.WriteAllText(_filePath, openFileDialog1.FileName);              
                 btnRemovePicture.Visible = true;
             } 
         }
@@ -87,9 +60,7 @@ namespace PictureViewer
         private void RemovePicture()
         {
             pbImage.Image = null;
-            var files = new List<Files>();
-            files.Add(new Files { FilePath = null});
-            SerializeToFile(files);
+            File.Delete(_filePath);
             btnRemovePicture.Visible = false;
         }
     }
